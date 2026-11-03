@@ -1,0 +1,9 @@
+# Secrets — never commit. Commit .env.example instead.
+.env
+
+# Private AI-assistant context, kept local only
+PROJECT_CONTEXT.md
+PROGRESS.md
+
+# macOS Finder metadata (icon positions etc.), not project content
+.DS_Store
