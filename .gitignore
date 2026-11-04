@@ -7,3 +7,6 @@ PROGRESS.md
 
 # macOS Finder metadata (icon positions etc.), not project content
 .DS_Store
+
+#python's compiled cache, regenerated on every run
+__pycache__/
