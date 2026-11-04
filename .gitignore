@@ -4,9 +4,11 @@
 # Private AI-assistant context, kept local only
 PROJECT_CONTEXT.md
 PROGRESS.md
+STORIES.md
 
 # macOS Finder metadata (icon positions etc.), not project content
 .DS_Store
 
 #python's compiled cache, regenerated on every run
 __pycache__/
+
