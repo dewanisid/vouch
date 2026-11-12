@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17.5
+        env:
+          POSTGRES_USER: vouch
+          POSTGRES_PASSWORD: ci-only
+          POSTGRES_DB: vouch
+        ports:
+          - "5433:5432"
+        options: >-
+          --health-cmd "pg_isready -U vouch -d vouch"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: "5433"
+      POSTGRES_USER: vouch
+      POSTGRES_PASSWORD: ci-only
+      POSTGRES_DB: vouch
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Install from the lockfile
+        run: uv sync --locked
+      - name: Lint
+        run: uv run ruff check .
+      - name: Format
+        run: uv run ruff format --check .
+      - name: Type check
+        run: uv run mypy
+      - name: Tests with coverage
+        run: uv run pytest --cov
+      - name: Seed 1k and check the data
+        run: |
+          uv run python -m vouch.seed --size 1k --seed 42
+          psql "postgresql://vouch:ci-only@localhost:5433/vouch" -tA -F '|' -f scripts/check-seed.sql \
+            | tee /dev/stderr \
+            | awk -F '|' '/\(bad\)/ && $2 != 0 { failed = 1 } END { exit failed }'
+
+  secrets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
