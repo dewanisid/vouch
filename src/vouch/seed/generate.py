@@ -1,4 +1,5 @@
 import random
+from itertools import accumulate
 
 from vouch.seed.careers import career
 from vouch.seed.colleges import college_name
@@ -15,6 +16,7 @@ def generate(user_count: int, seed: int) -> dict[str, list[tuple]]:
 
     company_count = max(1, user_count // PEOPLE_PER_COMPANY)
     sizes = company_sizes(user_count, company_count)
+    cum_sizes = list(accumulate(sizes))
     companies = [(company_id, f"Company {company_id}") for company_id in range(company_count)]
 
     users = list(enumerate(person_names(user_count, rng)))
@@ -22,7 +24,7 @@ def generate(user_count: int, seed: int) -> dict[str, list[tuple]]:
     jobs = []
     educations = []
     for user_id, _ in users:
-        for job in career(rng, company_weights=sizes, first_year=FIRST_YEAR, last_year=LAST_YEAR):
+        for job in career(rng, company_cum_weights=cum_sizes, first_year=FIRST_YEAR, last_year=LAST_YEAR):
             jobs.append((user_id, job["company"], job["start"], job["end"]))
         educations.append((user_id, college_name(rng)))
 
