@@ -3,7 +3,7 @@ import time
 from pathlib import Path
 
 from vouch.db import connect
-from vouch.seed.generate import generate
+from vouch.seed.generate import TABLES, generate_batches
 
 SCHEMA = Path(__file__).parents[3] / "db" / "schema.sql"
 
@@ -24,23 +24,24 @@ def main() -> None:
     args = parser.parse_args()
 
     started = time.perf_counter()
-    data = generate(SIZES[args.size], seed=args.seed)
-    generated = time.perf_counter()
+    rows = dict.fromkeys(TABLES, 0)
 
     with connect() as conn:
         conn.execute("DROP TABLE IF EXISTS educations, jobs, users, companies")
         conn.execute(SCHEMA.read_text())
         with conn.cursor() as cur:
-            for table, columns in COLUMNS.items():
-                with cur.copy(f"COPY {table} ({columns}) FROM STDIN") as copy:
-                    for row in data[table]:
-                        copy.write_row(row)
-    finished = time.perf_counter()
+            for batch in generate_batches(SIZES[args.size], seed=args.seed):
+                for table in TABLES:
+                    if not batch[table]:
+                        continue
+                    with cur.copy(f"COPY {table} ({COLUMNS[table]}) FROM STDIN") as copy:
+                        for row in batch[table]:
+                            copy.write_row(row)
+                    rows[table] += len(batch[table])
 
-    for table in COLUMNS:
-        print(f"{table:<11} {len(data[table]):>9,} rows")
-    print(f"generate {generated - started:.2f}s, write {finished - generated:.2f}s")
-
+    for table in TABLES:
+        print(f"{table:<11} {rows[table]:>9,} rows")
+    print(f"total {time.perf_counter() - started:.2f}s")
 
 if __name__ == "__main__":
     main()

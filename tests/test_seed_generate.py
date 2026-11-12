@@ -61,3 +61,7 @@ def test_graduates_of_the_biggest_college_cluster_in_a_few_companies():
 
     assert top_10_share(their_companies) > 0.5
     assert top_10_share(their_companies) > top_10_share(everyones_companies)
+
+
+def test_batch_size_does_not_change_the_data():
+    assert generate(1000, seed=42, batch_size=100) == generate(1000, seed=42, batch_size=10_000)
