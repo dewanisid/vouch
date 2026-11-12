@@ -1,6 +1,6 @@
 import random
 
-from vouch.seed.names import person_names
+from vouch.seed.names import FIRST_NAMES, LAST_NAMES, person_names
 
 
 def test_returns_the_requested_number_of_names():
@@ -30,7 +30,7 @@ def test_each_name_has_a_first_and_last_part():
         assert len(name.split(" ")) == 2
 import random
 
-from vouch.seed.names import person_names
+from vouch.seed.names import FIRST_NAMES, LAST_NAMES, person_names
 
 
 def test_returns_the_requested_number_of_names():
@@ -58,3 +58,12 @@ def test_each_name_has_a_first_and_last_part():
 
     for name in names:
         assert len(name.split(" ")) == 2
+
+
+def test_names_are_built_only_from_synthetic_parts():
+    names = person_names(1000, random.Random(42))
+
+    for name in names:
+        first, last = name.split(" ")
+        assert first in FIRST_NAMES
+        assert last in LAST_NAMES
