@@ -1,3 +1,6 @@
+from collections import Counter
+
+from vouch.seed.colleges import COLLEGES
 from vouch.seed.generate import generate
 
 
@@ -40,3 +43,21 @@ def test_biggest_company_has_more_jobs_than_smallest():
     jobs_at_smallest = [job for job in data["jobs"] if job[1] == last_company]
 
     assert len(jobs_at_biggest) > len(jobs_at_smallest)
+
+
+def top_10_share(company_ids):
+    counts = Counter(company_ids)
+    top_10 = sum(count for _, count in counts.most_common(10))
+    return top_10 / len(company_ids)
+
+
+def test_graduates_of_the_biggest_college_cluster_in_a_few_companies():
+    data = generate(10_000, seed=42)
+    biggest_college = set(COLLEGES[0])
+    graduates = {user_id for user_id, name in data["educations"] if name in biggest_college}
+
+    their_companies = [job[1] for job in data["jobs"] if job[0] in graduates]
+    everyones_companies = [job[1] for job in data["jobs"]]
+
+    assert top_10_share(their_companies) > 0.5
+    assert top_10_share(their_companies) > top_10_share(everyones_companies)
