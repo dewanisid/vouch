@@ -20,4 +20,3 @@ CREATE TABLE educations(
     user_id INTEGER NOT NULL REFERENCES users (id),
     college_name TEXT NOT NULL
 );
-
