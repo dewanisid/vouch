@@ -43,5 +43,6 @@ def main() -> None:
         print(f"{table:<11} {rows[table]:>9,} rows")
     print(f"total {time.perf_counter() - started:.2f}s")
 
+
 if __name__ == "__main__":
     main()
