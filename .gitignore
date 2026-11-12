@@ -12,3 +12,4 @@ STORIES.md
 #python's compiled cache, regenerated on every run
 __pycache__/
 
+.coverage
