@@ -94,9 +94,27 @@ services:
     cpus: 0.5
     mem_limit: 256m
 
+  api:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    cpus: 1.0
+    mem_limit: 512m
 
-
-
+  # Load generator. Not started by `up`; the load-test script runs it on demand.
+  k6:
+    image: grafana/k6:1.0.0
+    profiles: ["tools"]
+    working_dir: /loadtest
+    volumes:
+      - ./loadtest:/loadtest
+    cpus: 2.0
+    mem_limit: 512m
 
 volumes:
   postgres_data:
