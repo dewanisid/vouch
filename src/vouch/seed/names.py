@@ -1,13 +1,29 @@
 import random
 
 FIRST_NAMES = [
-    "Aarav", "Priya", "Rohan", "Ananya", "Vikram",
-    "Sara", "Kabir", "Meera", "Arjun", "Zoya",
+    "Aarav",
+    "Priya",
+    "Rohan",
+    "Ananya",
+    "Vikram",
+    "Sara",
+    "Kabir",
+    "Meera",
+    "Arjun",
+    "Zoya",
 ]
 
 LAST_NAMES = [
-    "Sharma", "Iyer", "Khan", "Patel", "Reddy",
-    "Das", "Mehta", "Nair", "Gupta", "Singh",
+    "Sharma",
+    "Iyer",
+    "Khan",
+    "Patel",
+    "Reddy",
+    "Das",
+    "Mehta",
+    "Nair",
+    "Gupta",
+    "Singh",
 ]
 
 
