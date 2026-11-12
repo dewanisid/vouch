@@ -1,18 +1,24 @@
 import random
+from collections.abc import Iterator
 from itertools import accumulate
 
 from vouch.seed.careers import career
 from vouch.seed.colleges import COLLEGES, college_name, pick_college
-from vouch.seed.names import person_names
+from vouch.seed.names import person_name
 from vouch.seed.sizes import company_sizes
 
 FIRST_YEAR = 2010
 LAST_YEAR = 2026
 PEOPLE_PER_COMPANY = 20
+BATCH_SIZE = 10_000
 
 # Graduates of a college cluster in a few companies (campus hiring, alumni referrals).
 FAVOURITES_PER_COLLEGE = 5
 CLUSTER_SHARE = 0.6
+
+TABLES = ["companies", "users", "jobs", "educations"]
+
+Batch = dict[str, list[tuple]]
 
 
 def pick_company(
@@ -26,36 +32,44 @@ def pick_company(
     return rng.choices(company_ids, cum_weights=cum_sizes)[0]
 
 
-def generate(user_count: int, seed: int) -> dict[str, list[tuple]]:
+def generate_batches(user_count: int, seed: int, batch_size: int = BATCH_SIZE) -> Iterator[Batch]:
+    """Yield the data in pieces, so memory stays flat however big user_count is."""
     rng = random.Random(seed)
 
     company_count = max(1, user_count // PEOPLE_PER_COMPANY)
     company_ids = range(company_count)
     cum_sizes = list(accumulate(company_sizes(user_count, company_count)))
-    companies = [(company_id, f"Company {company_id}") for company_id in company_ids]
-
     favourites = [
         rng.choices(company_ids, cum_weights=cum_sizes, k=FAVOURITES_PER_COLLEGE)
         for _ in COLLEGES
     ]
 
-    users = list(enumerate(person_names(user_count, rng)))
+    companies = [(company_id, f"Company {company_id}") for company_id in company_ids]
+    yield {"companies": companies, "users": [], "jobs": [], "educations": []}
 
-    jobs = []
-    educations = []
-    for user_id, _ in users:
-        college = pick_college(rng)
+    for batch_start in range(0, user_count, batch_size):
+        batch: Batch = {"companies": [], "users": [], "jobs": [], "educations": []}
 
-        def picker() -> int:
-            return pick_company(rng, favourites[college], company_ids, cum_sizes)
+        for user_id in range(batch_start, min(batch_start + batch_size, user_count)):
+            # Build each user completely before the next one, so the order of
+            # random numbers (and so the data) doesn't depend on batch_size.
+            batch["users"].append((user_id, person_name(rng)))
+            college = pick_college(rng)
 
-        for job in career(rng, pick_company=picker, first_year=FIRST_YEAR, last_year=LAST_YEAR):
-            jobs.append((user_id, job["company"], job["start"], job["end"]))
-        educations.append((user_id, college_name(rng, college)))
+            def picker() -> int:
+                return pick_company(rng, favourites[college], company_ids, cum_sizes)
 
-    return {
-        "companies": companies,
-        "users": users,
-        "jobs": jobs,
-        "educations": educations,
-    }
+            for job in career(rng, pick_company=picker, first_year=FIRST_YEAR, last_year=LAST_YEAR):
+                batch["jobs"].append((user_id, job["company"], job["start"], job["end"]))
+            batch["educations"].append((user_id, college_name(rng, college)))
+
+        yield batch
+
+
+def generate(user_count: int, seed: int, batch_size: int = BATCH_SIZE) -> Batch:
+    """All the data at once. Handy in tests; the seeder itself uses generate_batches."""
+    data: Batch = {table: [] for table in TABLES}
+    for batch in generate_batches(user_count, seed, batch_size):
+        for table in TABLES:
+            data[table].extend(batch[table])
+    return data
