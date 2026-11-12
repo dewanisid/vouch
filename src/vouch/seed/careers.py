@@ -7,7 +7,7 @@ def career(
     pick_company: Callable[[], int],
     first_year: int,
     last_year: int,
-) -> list[dict]:
+) -> list[dict[str, int | None]]:
     jobs = []
     year = rng.randint(first_year, last_year - 1)
 

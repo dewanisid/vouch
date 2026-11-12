@@ -1,4 +1,5 @@
 import random
+from itertools import pairwise
 
 from vouch.seed.careers import career
 
@@ -29,7 +30,7 @@ def test_each_job_ends_after_it_starts():
 
 def test_jobs_do_not_overlap():
     for jobs in many_careers():
-        for earlier, later in zip(jobs, jobs[1:]):
+        for earlier, later in pairwise(jobs):
             assert later["start"] >= earlier["end"]
 
 

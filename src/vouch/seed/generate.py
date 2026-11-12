@@ -1,5 +1,6 @@
 import random
 from collections.abc import Iterator
+from functools import partial
 from itertools import accumulate
 
 from vouch.seed.careers import career
@@ -18,7 +19,9 @@ CLUSTER_SHARE = 0.6
 
 TABLES = ["companies", "users", "jobs", "educations"]
 
-Batch = dict[str, list[tuple]]
+# One table row, with its columns in order: ids, names, years, or None.
+Row = tuple[int | str | None, ...]
+Batch = dict[str, list[Row]]
 
 
 def pick_company(
@@ -40,11 +43,10 @@ def generate_batches(user_count: int, seed: int, batch_size: int = BATCH_SIZE) -
     company_ids = range(company_count)
     cum_sizes = list(accumulate(company_sizes(user_count, company_count)))
     favourites = [
-        rng.choices(company_ids, cum_weights=cum_sizes, k=FAVOURITES_PER_COLLEGE)
-        for _ in COLLEGES
+        rng.choices(company_ids, cum_weights=cum_sizes, k=FAVOURITES_PER_COLLEGE) for _ in COLLEGES
     ]
 
-    companies = [(company_id, f"Company {company_id}") for company_id in company_ids]
+    companies: list[Row] = [(company_id, f"Company {company_id}") for company_id in company_ids]
     yield {"companies": companies, "users": [], "jobs": [], "educations": []}
 
     for batch_start in range(0, user_count, batch_size):
@@ -56,9 +58,7 @@ def generate_batches(user_count: int, seed: int, batch_size: int = BATCH_SIZE) -
             batch["users"].append((user_id, person_name(rng)))
             college = pick_college(rng)
 
-            def picker() -> int:
-                return pick_company(rng, favourites[college], company_ids, cum_sizes)
-
+            picker = partial(pick_company, rng, favourites[college], company_ids, cum_sizes)
             for job in career(rng, pick_company=picker, first_year=FIRST_YEAR, last_year=LAST_YEAR):
                 batch["jobs"].append((user_id, job["company"], job["start"], job["end"]))
             batch["educations"].append((user_id, college_name(rng, college)))
