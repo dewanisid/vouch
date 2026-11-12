@@ -11,7 +11,10 @@ exporters:
     endpoint: 0.0.0.0:8889
   otlphttp/loki:
     endpoint: http://loki:3100/otlp
-  debug:
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true   # plain connection inside Docker's private network
 
 extensions:
   health_check:
@@ -28,4 +31,4 @@ service:
       exporters: [otlphttp/loki]
     traces:
       receivers: [otlp]
-      exporters: [debug]
+      exporters: [otlp/tempo]

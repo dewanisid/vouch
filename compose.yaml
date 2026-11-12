@@ -91,13 +91,39 @@ services:
     depends_on:
       loki:
         condition: service_healthy
+      tempo:
+        condition: service_started
     cpus: 0.5
     mem_limit: 256m
 
+  tempo:
+    image: grafana/tempo:2.8.1
+    command: ["-config.file=/etc/tempo/tempo.yaml"]
+    ports:
+      - "127.0.0.1:3200:3200"
+    volumes:
+      - ./infra/tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
+      - tempo_data:/var/tempo
+    cpus: 0.5
+    mem_limit: 512m
+
   api:
     build: .
+    environment:
+      OTEL_SERVICE_NAME: vouch-api
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4318
+      LOG_LEVEL: INFO
     ports:
       - "127.0.0.1:8000:8000"
+    depends_on:
+      otel-collector:
+        condition: service_started
+    # Log rotation: Docker keeps at most 3 files of 10 MB of this container's output.
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 5s
@@ -121,3 +147,4 @@ volumes:
   prometheus_data:
   loki_data:
   grafana_data:
+  tempo_data:
