@@ -6,7 +6,7 @@ from vouch.seed.careers import career
 def many_careers():
     rng = random.Random(42)
     return [
-        career(rng, company_count=50, first_year=2010, last_year=2026)
+        career(rng, company_weights=[1] * 50, first_year=2010, last_year=2026)
         for _ in range(500)
     ]
 
@@ -50,7 +50,18 @@ def test_company_is_a_valid_index():
 
 
 def test_same_seed_gives_same_career():
-    first = career(random.Random(42), company_count=50, first_year=2010, last_year=2026)
-    second = career(random.Random(42), company_count=50, first_year=2010, last_year=2026)
+    first = career(random.Random(42), company_weights=[1] * 50, first_year=2010, last_year=2026)
+    second = career(random.Random(42), company_weights=[1] * 50, first_year=2010, last_year=2026)
 
     assert first == second
+
+
+def test_heavier_companies_are_picked_more_often():
+    rng = random.Random(42)
+    weights = [90, 10]
+    picks = []
+    for _ in range(500):
+        for job in career(rng, company_weights=weights, first_year=2010, last_year=2026):
+            picks.append(job["company"])
+
+    assert picks.count(0) > picks.count(1) * 3
