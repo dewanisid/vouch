@@ -33,7 +33,7 @@ jobs:
       POSTGRES_DB: vouch
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
       - name: Install from the lockfile
         run: uv sync --locked
       - name: Lint
