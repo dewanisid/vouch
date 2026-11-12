@@ -9,7 +9,10 @@ from typing import Any
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+from vouch.observability import instrument
+
 app = FastAPI(title="Vouch (placeholder)")
+instrument(app)
 
 
 class ReferralRequest(BaseModel):
