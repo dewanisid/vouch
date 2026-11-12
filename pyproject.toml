@@ -8,7 +8,10 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "mypy>=2.4.1",
     "pytest>=9.2.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.17.4",
 ]
 
 [tool.pytest.ini_options]
@@ -18,3 +21,22 @@ pythonpath = ["src"]
 [build-system]
 requires = ["uv_build>=0.13.7,<0.14"]
 build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+# E/F: errors and undefined names, I: import order, B: likely bugs,
+# UP: modern Python syntax, RUF: ruff's own checks
+select = ["E", "F", "I", "B", "UP", "RUF"]
+
+[tool.mypy]
+strict = true
+files = ["src"]
+
+[tool.coverage.run]
+source = ["vouch"]
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true
