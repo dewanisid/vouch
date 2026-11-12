@@ -3,10 +3,14 @@ import random
 from vouch.seed.careers import career
 
 
+def any_of_50(rng):
+    return lambda: rng.randrange(50)
+
+
 def many_careers():
     rng = random.Random(42)
     return [
-        career(rng, company_cum_weights=list(range(1, 51)), first_year=2010, last_year=2026)
+        career(rng, pick_company=any_of_50(rng), first_year=2010, last_year=2026)
         for _ in range(500)
     ]
 
@@ -50,18 +54,18 @@ def test_company_is_a_valid_index():
 
 
 def test_same_seed_gives_same_career():
-    first = career(random.Random(42), company_cum_weights=list(range(1, 51)), first_year=2010, last_year=2026)
-    second = career(random.Random(42), company_cum_weights=list(range(1, 51)), first_year=2010, last_year=2026)
+    first_rng = random.Random(42)
+    second_rng = random.Random(42)
+
+    first = career(first_rng, pick_company=any_of_50(first_rng), first_year=2010, last_year=2026)
+    second = career(second_rng, pick_company=any_of_50(second_rng), first_year=2010, last_year=2026)
 
     assert first == second
 
 
-def test_heavier_companies_are_picked_more_often():
+def test_every_job_uses_the_given_picker():
     rng = random.Random(42)
-    cum_weights = [90, 100]
-    picks = []
-    for _ in range(500):
-        for job in career(rng, company_cum_weights=cum_weights, first_year=2010, last_year=2026):
-            picks.append(job["company"])
+    jobs = career(rng, pick_company=lambda: 7, first_year=2010, last_year=2026)
 
-    assert picks.count(0) > picks.count(1) * 3
+    for job in jobs:
+        assert job["company"] == 7
